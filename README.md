@@ -1,2 +1,1 @@
-# Roblox-studio-yield
-Totally not inf yield
+loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
