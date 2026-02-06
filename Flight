@@ -1,0 +1,133 @@
+-- here local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local root = character:WaitForChild("HumanoidRootPart")
+
+player.CharacterAdded:Connect(function(char)
+	character = char
+	humanoid = char:WaitForChild("Humanoid")
+	root = char:WaitForChild("HumanoidRootPart")
+end)
+
+-- STATES
+local flying = false
+local noclip = false
+local superJump = false
+local speedBoost = false
+
+local flyBV, flyBG
+
+-- GUI
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "DevPanel"
+gui.ResetOnSpawn = false
+
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.fromOffset(260, 260)
+main.Position = UDim2.fromScale(0.05, 0.3)
+main.BackgroundColor3 = Color3.fromRGB(20,20,28)
+main.Active = true
+main.Draggable = true
+Instance.new("UICorner", main).CornerRadius = UDim.new(0,16)
+
+local stroke = Instance.new("UIStroke", main)
+stroke.Color = Color3.fromRGB(0,170,255)
+
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.new(1,0,0,36)
+title.BackgroundTransparency = 1
+title.Text = "Developer Abilities"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 18
+title.TextColor3 = Color3.fromRGB(200,220,255)
+
+local function makeBtn(name, y)
+	local b = Instance.new("TextButton", main)
+	b.Size = UDim2.new(1,-20,0,38)
+	b.Position = UDim2.fromOffset(10,y)
+	b.BackgroundColor3 = Color3.fromRGB(35,35,45)
+	b.Text = name .. ": OFF"
+	b.Font = Enum.Font.GothamBold
+	b.TextSize = 14
+	b.TextColor3 = Color3.fromRGB(255,120,120)
+	b.AutoButtonColor = false
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0,10)
+	return b
+end
+
+local flyBtn = makeBtn("Fly", 45)
+local noclipBtn = makeBtn("NoClip", 90)
+local jumpBtn = makeBtn("Super Jump", 135)
+local speedBtn = makeBtn("Speed Boost", 180)
+local healBtn = makeBtn("Full Heal", 225)
+
+local function toggleVisual(btn, state, label)
+	btn.Text = label .. ": " .. (state and "ON" or "OFF")
+	btn.TextColor3 = state and Color3.fromRGB(120,255,140) or Color3.fromRGB(255,120,120)
+end
+
+-- FLY
+flyBtn.MouseButton1Click:Connect(function()
+	flying = not flying
+	toggleVisual(flyBtn, flying, "Fly")
+
+	if flying then
+		flyBV = Instance.new("BodyVelocity", root)
+		flyBV.MaxForce = Vector3.new(1e9,1e9,1e9)
+		flyBV.Velocity = Vector3.zero
+
+		flyBG = Instance.new("BodyGyro", root)
+		flyBG.MaxTorque = Vector3.new(1e9,1e9,1e9)
+		flyBG.CFrame = workspace.CurrentCamera.CFrame
+	else
+		if flyBV then flyBV:Destroy() end
+		if flyBG then flyBG:Destroy() end
+	end
+end)
+
+RunService.RenderStepped:Connect(function()
+	if flying and flyBV then
+		local cam = workspace.CurrentCamera
+		flyBG.CFrame = cam.CFrame
+		flyBV.Velocity = cam.CFrame.LookVector * 80
+	end
+end)
+
+-- NOCLIP
+RunService.Stepped:Connect(function()
+	if noclip and character then
+		for _,v in pairs(character:GetDescendants()) do
+			if v:IsA("BasePart") then
+				v.CanCollide = false
+			end
+		end
+	end
+end)
+
+noclipBtn.MouseButton1Click:Connect(function()
+	noclip = not noclip
+	toggleVisual(noclipBtn, noclip, "NoClip")
+end)
+
+-- SUPER JUMP
+jumpBtn.MouseButton1Click:Connect(function()
+	superJump = not superJump
+	humanoid.JumpPower = superJump and 120 or 50
+	toggleVisual(jumpBtn, superJump, "Super Jump")
+end)
+
+-- SPEED BOOST
+speedBtn.MouseButton1Click:Connect(function()
+	speedBoost = not speedBoost
+	humanoid.WalkSpeed = speedBoost and 40 or 16
+	toggleVisual(speedBtn, speedBoost, "Speed Boost")
+end)
+
+-- HEAL
+healBtn.MouseButton1Click:Connect(function()
+	humanoid.Health = humanoid.MaxHealth
+end)
